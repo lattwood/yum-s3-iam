@@ -1,16 +1,25 @@
-NAME				= yum-plugin-s3-iam
-VERSION			= 1.0
-RELEASE			= 1
-ARCH				= noarch
+SRPM_OUT=./out/srpm
+RPM_OUT=./out/rpm
+SRC=./src
+OUT=./out
 
-RPM_TOPDIR ?= $(shell rpm --eval '%{_topdir}')
+SPEC_TOOL=/usr/bin/spectool
+MOCK=/usr/bin/mock
+TAR=/usr/bin/tar
+MOCK_ENV=therounds-epel-7-x86_64
+DIST=el7.centos
 
-RPMBUILD_ARGS := \
-	--define "name $(NAME)" \
-	--define "version $(VERSION)" \
-	--define "release $(RELEASE)"
+SPEC_FILE=./yum-plugin-s3-iam.spec
+VERSION:=$(shell grep Version\: ${SPEC_FILE} | awk '{print $$2}')
 
-.PHONY: all rpm install
+# Jenkins sets this environment variable for us. If it isn't set, set to 0
+ifndef BUILD_NUMBER
+BUILD_NUMBER=0
+endif
+
+MOCK_DEFINE=--define '__tr_release_num ${BUILD_NUMBER}'
+
+.PHONY: all rpm install dirs clean build-rpm build-srpm fetch-source mock-dep spectool-dep
 
 all:
 	@echo "Usage: make rpm"
@@ -20,16 +29,29 @@ install:
 	install -m 0644 s3iam.conf $(DESTDIR)/etc/yum/pluginconf.d/
 	install -m 0755 -d $(DESTDIR)/usr/lib/yum-plugins/
 	install -m 0644 s3iam.py $(DESTDIR)/usr/lib/yum-plugins/
+	cp s3iam.repo LICENSE NOTICE README.md ../
 
-rpm:
-	mkdir -p $(RPM_TOPDIR)/SOURCES
-	mkdir -p $(RPM_TOPDIR)/SPECS
-	mkdir -p $(RPM_TOPDIR)/BUILD
-	mkdir -p $(RPM_TOPDIR)/RPMS/$(ARCH)
-	mkdir -p $(RPM_TOPDIR)/SRPMS
-	rm -Rf $(RPM_TOPDIR)/SOURCES/$(NAME)-$(VERSION)
-	cp -r . $(RPM_TOPDIR)/SOURCES/$(NAME)-$(VERSION)
-	tar czf $(RPM_TOPDIR)/SOURCES/$(NAME)-$(VERSION).tar.gz -C $(RPM_TOPDIR)/SOURCES --exclude ".git" $(NAME)-$(VERSION)
-	rm -Rf $(RPM_TOPDIR)/SOURCES/$(NAME)-$(VERSION)
-	cp $(NAME).spec $(RPM_TOPDIR)/SPECS/
-	rpmbuild $(RPMBUILD_ARGS) -ba --clean $(NAME).spec
+dirs:
+	mkdir -p ${SRPM_OUT} ${RPM_OUT} ${SRC}
+
+clean:
+	rm -rf ${OUT} ${SRC}
+
+build-srpm: src/yum-plugin-s3-iam.tar.gz fetch-source mock-dep
+	cp ${SPEC_FILE} ${SRC}
+	${MOCK} -v -r ${MOCK_ENV} --buildsrpm --spec ${SPEC_FILE} --sources ${SRC} ${MOCK_DEFINE} --resultdir ${SRPM_OUT}
+
+build-rpm:  build-srpm mock-dep
+	${MOCK} -v -r ${MOCK_ENV} --rebuild ${SRPM_OUT}/yum-plugin-s3-iam-${VERSION}-${BUILD_NUMBER}.${DIST}.src.rpm ${MOCK_DEFINE} --resultdir ${RPM_OUT}
+
+fetch-source: spectool-dep
+	${SPEC_TOOL} -g -R -C ${SRC} ${SPEC_FILE}
+
+src/yum-plugin-s3-iam.tar.gz: dirs
+	tar --exclude=".git" --exclude="yum-plugin-s3-iam.tar.gz" -czvvf src/yum-plugin-s3-iam.tar.gz .
+
+mock-dep:
+	test -x ${MOCK} || { echo "You do not have mock installed! Install with 'yum install -y mock'. Exiting..."; false; }
+
+spectool-dep:
+	test -x ${SPEC_TOOL} || { echo "You do not have spectool installed! Install with 'yum install -y rpmdevtools'. Exiting..."; false; }
