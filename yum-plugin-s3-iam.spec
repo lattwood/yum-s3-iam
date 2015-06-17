@@ -44,6 +44,9 @@ rm -rf ${RPM_BUILD_ROOT}
 /usr/lib/yum-plugins/s3iam.py
 
 %changelog
+* Wed Jun 17 2015 Logan Attwood <logan@jnickel.com> 1.0-3
+Use a mock environment that exists by default.
+
 * Mon Oct 20 2014 Logan Attwood <logan@therounds.ca> 1.0-2
 Packaging modifications
 
