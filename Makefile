@@ -22,7 +22,7 @@ MOCK_DEFINE=--define '__tr_release_num ${BUILD_NUMBER}'
 .PHONY: all rpm install dirs clean build-rpm build-srpm fetch-source mock-dep spectool-dep
 
 all:
-	@echo "Usage: make rpm"
+	@echo "Usage: make build-rpm"
 
 install:
 	install -m 0755 -d $(DESTDIR)/etc/yum/pluginconf.d/
