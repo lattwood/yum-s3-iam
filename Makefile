@@ -6,7 +6,7 @@ OUT=./out
 SPEC_TOOL=/usr/bin/spectool
 MOCK=/usr/bin/mock
 TAR=/usr/bin/tar
-MOCK_ENV=therounds-epel-7-x86_64
+MOCK_ENV=epel-7-x86_64
 DIST=el7.centos
 
 SPEC_FILE=./yum-plugin-s3-iam.spec
