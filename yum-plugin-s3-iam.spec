@@ -40,8 +40,8 @@ rm -rf ${RPM_BUILD_ROOT}
 %defattr(-,root,root,-)
 %doc s3iam.repo
 %doc LICENSE NOTICE README.md
-/etc/yum/pluginconf.d/s3iam.conf
-/usr/lib/yum-plugins/s3iam.py
+%config /etc/yum/pluginconf.d/s3iam.conf
+/usr/lib/yum-plugins/s3iam.py*
 
 %changelog
 * Wed Jun 17 2015 Logan Attwood <logan@jnickel.com> 1.0-3
